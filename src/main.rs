@@ -5,6 +5,8 @@ use log::{error, info, warn};
 use rustyline::error::ReadlineError;
 use rustyline::{Editor, Helper};
 
+mod reader;
+
 const HISTORY_PATH: &str = ".mal-editor";
 
 fn main() {
