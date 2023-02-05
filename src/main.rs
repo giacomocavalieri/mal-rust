@@ -6,10 +6,18 @@ use rustyline::error::ReadlineError;
 use rustyline::{Editor, Helper};
 
 mod reader;
+use crate::reader::Tokenizer;
 
 const HISTORY_PATH: &str = ".mal-editor";
 
 fn main() {
+    let input = "(form 123 ~@[no vabbe] (predicate? '(123)))".to_string();
+    let mut tokenizer = Tokenizer::new(&input);
+    while let Ok(token) = tokenizer.next() {
+        print!("{:?} ", token);
+    }
+    panic!("Done {:?}", tokenizer.rest());
+
     setup_logger();
     let mut editor = Editor::<()>::new().unwrap();
     load_command_history(&mut editor);
