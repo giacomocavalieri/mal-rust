@@ -5,19 +5,14 @@ use log::{error, info, warn};
 use rustyline::error::ReadlineError;
 use rustyline::{Editor, Helper};
 
-mod reader;
-use crate::reader::Tokenizer;
+mod parser;
+mod tokenizer;
+
+use crate::tokenizer::Tokenizer;
 
 const HISTORY_PATH: &str = ".mal-editor";
 
 fn main() {
-    let input = "(form 123 ~@[no vabbe] (predicate? '(123)))".to_string();
-    let mut tokenizer = Tokenizer::new(&input);
-    while let Ok(token) = tokenizer.next() {
-        print!("{:?} ", token);
-    }
-    panic!("Done {:?}", tokenizer.rest());
-
     setup_logger();
     let mut editor = Editor::<()>::new().unwrap();
     load_command_history(&mut editor);
@@ -53,7 +48,13 @@ fn read_eval_print_loop<H: Helper>(editor: &mut Editor<H>) {
         match editor.readline(prompt) {
             Ok(line) if !line.is_empty() => {
                 editor.add_history_entry(&line);
-                println!("{line}");
+
+                let mut chars = line.chars();
+                let mut tokenizer = Tokenizer::new(&mut chars);
+                while let Some(Ok(token)) = tokenizer.next() {
+                    print!("{:?} ", token)
+                }
+                println!("")
             }
             Ok(_) => continue,
             Err(ReadlineError::Interrupted) => continue,
