@@ -1,6 +1,6 @@
 use std::iter::Peekable;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Token {
     OpenParen,
     CloseParen,
@@ -117,7 +117,7 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn consume_line(&mut self) -> String {
-        self.consume_until(|char| *char == '\n')
+        self.consume_until(|char| *char != '\n')
     }
 
     fn consume_while<F: Fn(&char) -> bool>(&mut self, predicate: F) -> String {
@@ -140,11 +140,42 @@ impl<'a> Tokenizer<'a> {
     fn consume_until<F: Fn(&char) -> bool>(&mut self, predicate: F) -> String {
         let mut consumed_chars = vec![];
         while let Some(char) = self.chars.next() {
-            consumed_chars.push(char);
             if predicate(&char) {
+                consumed_chars.push(char);
+            } else {
                 break;
             }
         }
         consumed_chars.into_iter().collect()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::tokenizer::Token;
+    use crate::tokenizer::Tokenizer;
+
+    impl Tokenizer<'_> {
+        fn unwrap_next(&mut self) -> Token {
+            self.next().unwrap().unwrap()
+        }
+    }
+
+    #[test]
+    fn consume_whitespaces() {
+        let mut chars = "  \t\nfoo\n \n\rbar".chars();
+        let mut tokenizer = Tokenizer::new(&mut chars);
+        tokenizer.consume_whitespace();
+        assert_eq!(tokenizer.unwrap_next(), Token::Word("foo".to_string()));
+        tokenizer.consume_whitespace();
+        assert_eq!(tokenizer.unwrap_next(), Token::Word("bar".to_string()))
+    }
+
+    #[test]
+    fn consume_line() {
+        let mut chars = "foo\nbar".chars();
+        let mut tokenizer = Tokenizer::new(&mut chars);
+        assert_eq!(tokenizer.consume_line(), "foo");
+        assert_eq!(tokenizer.consume_line(), "bar");
     }
 }
